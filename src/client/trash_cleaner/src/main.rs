@@ -89,7 +89,8 @@ impl Trash {
         })?;
 
         // try stat trash directory and check user
-        let trash_stat = nix::sys::stat::fstat(trash_dir.as_raw_fd())?;
+        //let trash_stat = nix::sys::stat::fstat(trash_dir.as_raw_fd())?;
+        let trash_stat = nix::sys::stat::fstat(&trash_dir)?;
         if trash_stat.st_uid != user || trash_stat.st_gid != user {
             error!(
                 "trash directory {:?}, owner {}:{} != {}, {}",
@@ -137,7 +138,7 @@ impl Trash {
     pub fn clean(self, clean_unknown: bool) -> nix::Result<usize> {
         assert!(!clean_unknown);
 
-        let dir_fd = unistd::dup(self.dir.as_raw_fd()).map_err(|err| {
+        let dir_fd = unistd::dup(&self.dir).map_err(|err| {
             error!("trash directory {:?} dup fd failed, {}", self.path, err);
             err
         })?;
@@ -283,7 +284,8 @@ impl Trash {
 
         // record trash item entries before remove
         let sub_entries = Dir::openat(
-            Some(self.dir.as_raw_fd()),
+            //Some(&self.dir),
+            &self.dir,
             entry.file_name(),
             OFlag::O_RDONLY | OFlag::O_DIRECTORY,
             Mode::empty(),
@@ -393,7 +395,7 @@ fn scan_trash<P: AsRef<Path>>(trash_root: &P) -> nix::Result<()> {
         err
     })?;
 
-    let dir_fd = dir.as_raw_fd();
+    let dir_fd = &dir;
     let dir_stat = nix::sys::stat::fstat(dir_fd)?;
     if dir_stat.st_uid != 0 || dir_stat.st_gid != 0 {
         error!(
@@ -403,6 +405,7 @@ fn scan_trash<P: AsRef<Path>>(trash_root: &P) -> nix::Result<()> {
         abort();
     }
 
+    let dir_fd_handle = nix::unistd::dup(&dir)?;
     for entry in dir.iter() {
         let entry = entry.map_err(|err| {
             error!("scan trash root {:?} failed, {}", trash_root, err);
@@ -425,7 +428,9 @@ fn scan_trash<P: AsRef<Path>>(trash_root: &P) -> nix::Result<()> {
         }
 
         let entry_stat = match nix::sys::stat::fstatat(
-            Some(dir_fd),
+            //Some(dir_fd),
+            //dir_fd,
+            &dir_fd_handle,
             entry.file_name(),
             nix::fcntl::AtFlags::AT_SYMLINK_NOFOLLOW,
         ) {

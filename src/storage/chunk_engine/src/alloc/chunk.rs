@@ -45,7 +45,8 @@ impl Chunk {
         self.meta.last_client_low = req.last_client_low;
         self.meta.last_client_high = req.last_client_high;
         if req.desired_tag.is_empty() {
-            let r: u64 = rand::thread_rng().gen();
+            //let r: u64 = rand::thread_rng().gen();
+            let r: u64 = rand::rng().random();
             self.meta.etag = ETag::from(format!("{:X}", r).as_bytes());
         } else {
             self.meta.etag = req.desired_tag.into();

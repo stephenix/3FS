@@ -329,7 +329,8 @@ impl MetaStore {
         self.rocksdb.delete(group_bits_key, true)
     }
 
-    pub fn iterator(&self) -> RocksDBIterator {
+    pub fn iterator(&self) -> RocksDBIterator<'_> {
+    //pub fn iterator(&self) -> RocksDBIterator {
         self.rocksdb.new_iterator()
     }
 

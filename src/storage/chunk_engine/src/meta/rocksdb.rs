@@ -53,7 +53,8 @@ impl RocksDB {
         })
     }
 
-    pub fn get(&self, key: impl AsRef<[u8]>) -> Result<Option<rocksdb::DBPinnableSlice>> {
+    //pub fn get(&self, key: impl AsRef<[u8]>) -> Result<Option<rocksdb::DBPinnableSlice>> {
+    pub fn get(&self, key: impl AsRef<[u8]>) -> Result<Option<rocksdb::DBPinnableSlice<'_>>> {
         match self.db.get_pinned(key) {
             Ok(v) => Ok(v),
             Err(e) => Err(Error::RocksDBError(format!("RocksDB fail: {e:?}"))),
@@ -88,7 +89,8 @@ impl RocksDB {
         }
     }
 
-    pub fn new_iterator(&self) -> RocksDBIterator {
+    pub fn new_iterator(&self) -> RocksDBIterator<'_> {
+    //pub fn new_iterator(&self) -> RocksDBIterator {
         let mut read_options = rocksdb::ReadOptions::default();
         read_options.set_readahead_size(Size::mebibyte(4).into());
         RocksDBIterator(self.db.raw_iterator_opt(read_options))
